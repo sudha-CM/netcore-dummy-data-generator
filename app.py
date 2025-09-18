@@ -140,7 +140,7 @@ if st.button("📦 Generate Event JSON"):
             }
 
             response = requests.post(
-                url="https://api.netcorecloud.net/v3/activity/bulk",
+                url="https://api2.netcoresmartech.com/v1/activity/upload",
                 headers=headers,
                 json=event_json
             )
