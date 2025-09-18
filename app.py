@@ -27,6 +27,7 @@ generate = st.button("🚀 Generate Dummy Users")
 
 if generate:
     emails = [f"user{i}@example.com" for i in range(1, num_users + 1)]
+    st.session_state["dummy_users"] = emails # ✅ Save to session state
     phones = [fake.msisdn()[0:10] for _ in range(num_users)]
     languages = random.choices(['ENGLISH', 'SPANISH', 'GERMAN', 'FRENCH'], k=num_users)
 
@@ -107,20 +108,24 @@ num_activity_users = st.number_input("How many sample users for activity JSON?",
 
 if st.button("📦 Generate Event JSON"):
     if asset_id and api_key:
-        products = [
-            {"ImageURL": img1, "productURL": url1, "productName": name1, "price": price1},
-            {"ImageURL": img2, "productURL": url2, "productName": name2, "price": price2}
-        ]
+     products = [
+        {"ImageURL": img1, "productURL": url1, "productName": name1, "price": price1},
+        {"ImageURL": img2, "productURL": url2, "productName": name2, "price": price2}
+    ]
 
-        users = [f"user{i+1}@example.com" for i in range(num_activity_users)]
+    if "dummy_users" in st.session_state:
+        users = random.sample(
+            st.session_state["dummy_users"],
+            k=min(num_activity_users, len(st.session_state["dummy_users"]))
+        )
+
         event_json = generate_activity_payloads(asset_id, users, products)
 
         st.success("Sample Event JSON Generated")
         st.json(event_json[:3])  # Preview top 3 only
 
-        json_str = str(event_json).replace("'", '"')  # to ensure it's valid JSON
+        json_str = str(event_json).replace("'", '"')
 
-                # Download button here...
         st.download_button(
             label="📥 Download JSON",
             data=json_str,
@@ -135,7 +140,7 @@ if st.button("📦 Generate Event JSON"):
             }
 
             response = requests.post(
-                url="https://api2.netcoresmartech.com/v1/activity/upload",  # confirm this is correct
+                url="https://api.netcorecloud.net/v3/activity/bulk",
                 headers=headers,
                 json=event_json
             )
@@ -144,6 +149,10 @@ if st.button("📦 Generate Event JSON"):
                 st.success("✅ Data pushed to Netcore successfully!")
             else:
                 st.error(f"❌ Failed to push data. Status Code: {response.status_code}")
-                st.json(response.json())  # Show error details
+                st.json(response.json())
+
     else:
-        st.error("Please enter Asset ID and API Key first.")
+        st.error("⚠️ Please generate dummy users first.")
+        st.stop()
+else:
+    st.error("Please enter Asset ID and API Key first.")
