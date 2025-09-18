@@ -6,11 +6,10 @@ import random
 import requests
 
 fake = Faker()
-
 st.set_page_config(page_title="Netcore Dummy Data Generator", layout="wide")
-st.title("📧 Netcore Dummy Contact & Event Generator")
+st.title("📧 Netcore Dummy Contact Generator")
 
-# Step 1: User Inputs
+# User input for contact generation
 num_users = st.number_input("How many users to generate?", min_value=100, max_value=30000, step=1000, value=1000)
 
 custom_attr_1 = st.text_input("Custom Attribute 1 Name (e.g., SEGMENT)")
@@ -23,12 +22,9 @@ website = st.text_input("Enter website/brand (e.g., shop.example.com)")
 asset_id = st.text_input("Enter Netcore Asset ID")
 api_key = st.text_input("Enter Netcore API Key")
 
-# Generate Dummy Users
-generate = st.button("🚀 Generate Dummy Users")
-
-if generate:
+if st.button("🚀 Generate Dummy Users"):
     emails = [f"user{i}@example.com" for i in range(1, num_users + 1)]
-    st.session_state["dummy_users"] = emails  # Save in session
+    st.session_state["dummy_users"] = emails
     phones = [fake.msisdn()[0:10] for _ in range(num_users)]
     languages = random.choices(['ENGLISH', 'SPANISH', 'GERMAN', 'FRENCH'], k=num_users)
 
@@ -46,79 +42,77 @@ if generate:
         custom_attr_2.upper(): attr2_list
     })
 
-    st.success("✅ Dummy users generated")
+    st.session_state["dummy_df"] = df
+    st.success("Dummy contact list generated ✅")
     st.write(df.head(10))
 
     csv = df.to_csv(index=False).encode('utf-8')
-    st.download_button(
-        label="📥 Download CSV",
-        data=csv,
-        file_name='dummy_contact_list.csv',
-        mime='text/csv'
-    )
+    st.download_button("📥 Download CSV", data=csv, file_name='dummy_contact_list.csv', mime='text/csv')
 
-# Generate Sample Events
-st.header("🧪 Generate Sample Product Purchase Events")
+# Product Inputs
+st.header("📦 Enter Product Details (at least 1)")
 
-img1 = st.text_input("Product 1 Image URL")
-url1 = st.text_input("Product 1 Product URL")
-name1 = st.text_input("Product 1 Name")
-price1 = st.number_input("Product 1 Price", min_value=1, max_value=1000, value=79)
+products = []
+for i in range(2):
+    with st.expander(f"Product {i+1}"):
+        name = st.text_input(f"Product {i+1} Name", key=f"name_{i}")
+        url = st.text_input(f"Product {i+1} URL", key=f"url_{i}")
+        img = st.text_input(f"Product {i+1} Image URL", key=f"img_{i}")
+        price = st.number_input(f"Product {i+1} Price", min_value=1, max_value=1000, value=99, key=f"price_{i}")
+        if name and url and img:
+            products.append({"productName": name, "productURL": url, "ImageURL": img, "price": price})
 
-img2 = st.text_input("Product 2 Image URL")
-url2 = st.text_input("Product 2 Product URL")
-name2 = st.text_input("Product 2 Name")
-price2 = st.number_input("Product 2 Price", min_value=1, max_value=1000, value=115)
+if len(products) == 0:
+    st.warning("Please add at least one product.")
+else:
+    st.success(f"{len(products)} product(s) saved.")
 
-num_activity_users = st.number_input("How many users to generate activity for?", min_value=1, max_value=1000, step=50, value=50)
+# Event Payload Generator
+st.header("🧪 Generate Sample Product Purchase Event JSON")
+num_activity_users = st.number_input("Number of users for activity JSON", min_value=1, max_value=1000, value=50)
 
 if st.button("📦 Generate Event JSON"):
-    if not (asset_id and api_key):
-        st.error("❗ Please enter Asset ID and API Key first.")
-        st.stop()
+    if not asset_id or not api_key:
+        st.error("⚠️ Please enter both Asset ID and API Key first.")
+    elif "dummy_users" not in st.session_state:
+        st.error("⚠️ Please generate dummy users first.")
+    elif not products:
+        st.error("⚠️ Please enter at least one product.")
+    else:
+        users = random.sample(st.session_state["dummy_users"], k=min(num_activity_users, len(st.session_state["dummy_users"])))
+        event_json = generate_activity_payloads(asset_id, users, products)
 
-    if "dummy_users" not in st.session_state:
-        st.error("❗ Please generate dummy users first.")
-        st.stop()
+        st.session_state["event_json"] = event_json
 
-    products = [
-        {"ImageURL": img1, "productURL": url1, "productName": name1, "price": price1},
-        {"ImageURL": img2, "productURL": url2, "productName": name2, "price": price2}
-    ]
+        st.success("Sample Event JSON Generated")
+        st.json(event_json[:3])
 
-    users = random.sample(st.session_state["dummy_users"], k=min(num_activity_users, len(st.session_state["dummy_users"])))
-    event_json = generate_activity_payloads(asset_id, users, products)
+        json_str = str(event_json).replace("'", '"')
+        st.download_button("📥 Download JSON", data=json_str, file_name="event_payload.json", mime="application/json")
 
-    st.success("✅ Sample Event JSON Generated")
-    st.json(event_json[:3])  # Show top 3 for preview
-
-    json_str = str(event_json).replace("'", '"')
-
-    st.download_button(
-        label="📥 Download JSON",
-        data=json_str,
-        file_name="sample_event_payloads.json",
-        mime="application/json"
-    )
-
-    if st.button("🚀 Push to Netcore"):
+# Push to Netcore
+if st.button("🚀 Push to Netcore"):
+    if not asset_id or not api_key:
+        st.error("⚠️ Please enter both Asset ID and API Key.")
+    elif "event_json" not in st.session_state:
+        st.error("⚠️ Please generate event data first.")
+    else:
         headers = {
             "Content-Type": "application/json",
             "Authorization": api_key,
             "X-Netcore-Asset-Id": asset_id
         }
+        try:
+            response = requests.post(
+                url="https://api2.netcoresmartech.com/v1/activity/upload",
+                headers=headers,
+                json=st.session_state["event_json"]
+            )
 
-        response = requests.post(
-            url="https://api2.netcoresmartech.com/v1/activity/upload",
-            headers=headers,
-            json=event_json
-        )
-
-        if response.status_code == 200:
-            st.success("🎉 Data pushed to Netcore successfully!")
-        else:
-            st.error(f"❌ Failed. Status Code: {response.status_code}")
-            try:
-                st.json(response.json())
-            except Exception as e:
-                st.error(f"⚠️ Could not parse error response: {e}")
+            if response.status_code == 200:
+                st.success("✅ Data pushed to Netcore successfully!")
+            else:
+                st.error(f"❌ Failed with status code: {response.status_code}")
+                st.write(response.text)
+        except Exception as e:
+            st.error(f"❌ Exception occurred: {e}")
