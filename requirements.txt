@@ -1,0 +1,5 @@
+streamlit
+faker
+pandas
+beautifulsoup4
+requests
