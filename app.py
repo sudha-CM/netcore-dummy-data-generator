@@ -3,6 +3,7 @@ import streamlit as st
 import pandas as pd
 from faker import Faker
 import random
+import requests
 
 fake = Faker()
 
@@ -119,11 +120,30 @@ if st.button("📦 Generate Event JSON"):
 
         json_str = str(event_json).replace("'", '"')  # to ensure it's valid JSON
 
+                # Download button here...
         st.download_button(
             label="📥 Download JSON",
             data=json_str,
             file_name="sample_event_payloads.json",
             mime="application/json"
         )
+
+        if st.button("🚀 Push to Netcore"):
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": api_key
+            }
+
+            response = requests.post(
+                url="https://api.netcorecloud.net/v3/activity/bulk",  # confirm this is correct
+                headers=headers,
+                json=event_json
+            )
+
+            if response.status_code == 200:
+                st.success("✅ Data pushed to Netcore successfully!")
+            else:
+                st.error(f"❌ Failed to push data. Status Code: {response.status_code}")
+                st.json(response.json())  # Show error details
     else:
         st.error("Please enter Asset ID and API Key first.")
