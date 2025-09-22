@@ -59,7 +59,7 @@ if generate:
         file_name='dummy_contact_list.csv',
         mime='text/csv'
     )
-        st.markdown("""
+    st.markdown("""
     ### ℹ️ Next Steps in the Panel
     1. **Download this data** using the button above.  
     2. **Create attributes in the panel** corresponding to the columns you see here (EMAIL, PHONE, LANGUAGE, etc.).  
