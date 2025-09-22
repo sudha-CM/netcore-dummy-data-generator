@@ -127,20 +127,37 @@ if st.button("📦 Generate Event JSON"):
     )
 
     if st.button("🚀 Push to Netcore"):
-        full_url = f"https://api2.netcoresmartech.com/v1/activity/upload?apikey={api_key}"
-        headers = {"Content-Type": "application/json"}
+    full_url = "https://api2.netcoresmartech.com/v1/activity/upload"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}"
+    }
 
+    try:
         response = requests.post(
             url=full_url,
             headers=headers,
-            json=event_json
+            json=event_json,
+            timeout=15
         )
+
+        st.write("➡️ Request URL:", full_url)
+        st.write("➡️ Sending Payload (first 1 event):")
+        st.json(event_json[:1])
 
         if response.status_code == 200:
             st.success("✅ Data pushed to Netcore successfully!")
+            try:
+                st.json(response.json())
+            except:
+                st.write(response.text)
         else:
             st.error(f"❌ Failed with status code: {response.status_code}")
             try:
                 st.json(response.json())
             except:
                 st.write(response.text)
+
+    except Exception as e:
+        st.error(f"🚨 Request failed: {str(e)}")
+
