@@ -59,6 +59,15 @@ if generate:
         file_name='dummy_contact_list.csv',
         mime='text/csv'
     )
+        st.markdown("""
+    ### ℹ️ Next Steps in the Panel
+    1. **Download this data** using the button above.  
+    2. **Create attributes in the panel** corresponding to the columns you see here (EMAIL, PHONE, LANGUAGE, etc.).  
+    3. **Upload the data** into the panel.  
+    4. You might receive a **harvest error** — if you do, please reach out to Support.  
+    5. Only after completing these steps, proceed to **generate and push event data**.  
+    """)
+
 
 # Step 2: Product + Activity Payload
 st.header("🧪 Generate Product Activity Event JSON")
