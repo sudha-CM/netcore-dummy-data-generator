@@ -12,17 +12,20 @@ st.set_page_config(page_title="Netcore Dummy Data Generator", layout="wide")
 st.title("📧 Netcore Dummy Contact Generator")
 
 # Step 1: Generate Dummy Users
-num_users = st.number_input("How many users to generate?", min_value=100, max_value=30000, step=1000, value=1000)
+num_users = st.number_input(
+    "How many users to generate?",
+    min_value=100, max_value=30000, step=1000, value=1000
+)
 
-custom_attr_1 = st.text_input("Custom Attribute 1 Name (e.g., SEGMENT)")
-custom_values_1 = st.text_input("Possible values for Attribute 1 (comma separated)")
+custom_attr_1 = st.text_input("Custom Attribute 1 Name (e.g., SEGMENT)", value="SEGMENT")
+custom_values_1 = st.text_input("Possible values for Attribute 1 (comma separated)", value="NEW,LOYAL,VIP")
 
-custom_attr_2 = st.text_input("Custom Attribute 2 Name (e.g., TIER)")
-custom_values_2 = st.text_input("Possible values for Attribute 2 (comma separated)")
+custom_attr_2 = st.text_input("Custom Attribute 2 Name (e.g., TIER)", value="TIER")
+custom_values_2 = st.text_input("Possible values for Attribute 2 (comma separated)", value="BRONZE,SILVER,GOLD")
 
-website = st.text_input("Enter website/brand (e.g., shop.example.com)")
-asset_id = st.text_input("Enter Netcore Asset ID")
-api_key = st.text_input("Enter Netcore API Key", type="password")
+website = st.text_input("Enter website/brand (e.g., shop.example.com)", value="shop.example.com")
+asset_id = st.text_input("Enter Netcore Asset ID", value="12345")
+api_key = st.text_input("Enter Netcore API Key", type="password", value="your_api_key_here")
 
 generate = st.button("🚀 Generate Dummy Users")
 
@@ -63,18 +66,21 @@ st.header("🧪 Generate Product Activity Event JSON")
 
 col1, col2 = st.columns(2)
 with col1:
-    img1 = st.text_input("Product 1 Image URL")
-    url1 = st.text_input("Product 1 Product URL")
-    name1 = st.text_input("Product 1 Name")
+    img1 = st.text_input("Product 1 Image URL", value="https://via.placeholder.com/150")
+    url1 = st.text_input("Product 1 Product URL", value="https://shop.example.com/product1")
+    name1 = st.text_input("Product 1 Name", value="Cool Shirt")
     price1 = st.number_input("Product 1 Price", min_value=1, max_value=1000, value=79)
 
 with col2:
-    img2 = st.text_input("Product 2 Image URL")
-    url2 = st.text_input("Product 2 Product URL")
-    name2 = st.text_input("Product 2 Name")
+    img2 = st.text_input("Product 2 Image URL", value="https://via.placeholder.com/200")
+    url2 = st.text_input("Product 2 Product URL", value="https://shop.example.com/product2")
+    name2 = st.text_input("Product 2 Name", value="Trendy Shoes")
     price2 = st.number_input("Product 2 Price", min_value=1, max_value=1000, value=115)
 
-num_activity_users = st.number_input("How many users for activity JSON?", min_value=1, max_value=1000, step=50, value=50)
+num_activity_users = st.number_input(
+    "How many users for activity JSON?",
+    min_value=1, max_value=1000, step=50, value=50
+)
 
 if st.button("📦 Generate Event JSON"):
     if not asset_id or not api_key:
@@ -95,11 +101,12 @@ if st.button("📦 Generate Event JSON"):
         k=min(num_activity_users, len(st.session_state["dummy_users"]))
     )
 
-    # ✅ BUILD PAYLOAD
+    # ✅ BUILD PAYLOAD (asset_id inside each event)
     event_json = []
-    for i, user in enumerate(selected_users):
+    for user in selected_users:
         product = random.choice(products)
         event = {
+            "asset_id": asset_id,
             "activity_name": "Product Purchase",
             "timestamp": datetime.utcnow().isoformat(),
             "identity": user,
@@ -109,9 +116,9 @@ if st.button("📦 Generate Event JSON"):
         event_json.append(event)
 
     st.success("Sample Event JSON Generated ✅")
-    st.json(event_json[:3])  # Preview first 3
-    json_str = str(event_json).replace("'", '"')
+    st.json(event_json[:3])  # Preview first 3 events
 
+    json_str = str(event_json).replace("'", '"')
     st.download_button(
         label="📥 Download JSON",
         data=json_str,
@@ -120,11 +127,8 @@ if st.button("📦 Generate Event JSON"):
     )
 
     if st.button("🚀 Push to Netcore"):
-        full_url = f"https://api2.netcoresmartech.com/v1/activity/upload?api_key={api_key}&asset_id={asset_id}"
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {api_key}"
-        }
+        full_url = f"https://api2.netcoresmartech.com/v1/activity/upload?apikey={api_key}"
+        headers = {"Content-Type": "application/json"}
 
         response = requests.post(
             url=full_url,
