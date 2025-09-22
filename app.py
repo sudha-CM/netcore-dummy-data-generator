@@ -61,7 +61,6 @@ if generate:
     )
 
 # Step 2: Product + Activity Payload
-
 st.header("🧪 Generate Product Activity Event JSON")
 
 col1, col2 = st.columns(2)
@@ -125,7 +124,9 @@ if st.button("📦 Generate Event JSON"):
         file_name="sample_event_payloads.json",
         mime="application/json"
     )
-        if st.button("🚀 Push to Netcore"):
+
+    # ✅ Push block (proper indentation + Bearer auth)
+    if st.button("🚀 Push to Netcore"):
         full_url = "https://api2.netcoresmartech.com/v1/activity/upload"
         headers = {
             "Content-Type": "application/json",
@@ -159,4 +160,3 @@ if st.button("📦 Generate Event JSON"):
 
         except Exception as e:
             st.error(f"🚨 Request failed: {str(e)}")
-
