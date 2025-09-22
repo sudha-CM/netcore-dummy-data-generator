@@ -81,6 +81,7 @@ num_activity_users = st.number_input(
     min_value=1, max_value=1000, step=50, value=50
 )
 
+# ✅ Generate Event JSON
 if st.button("📦 Generate Event JSON"):
     if not asset_id or not api_key:
         st.error("Please enter Asset ID and API Key first.")
@@ -100,7 +101,6 @@ if st.button("📦 Generate Event JSON"):
         k=min(num_activity_users, len(st.session_state["dummy_users"]))
     )
 
-    # ✅ BUILD PAYLOAD (asset_id inside each event)
     event_json = []
     for user in selected_users:
         product = random.choice(products)
@@ -114,8 +114,9 @@ if st.button("📦 Generate Event JSON"):
         }
         event_json.append(event)
 
+    st.session_state["event_json"] = event_json  # ✅ Save for push
     st.success("Sample Event JSON Generated ✅")
-    st.json(event_json[:3])  # Preview first 3 events
+    st.json(event_json[:3])
 
     json_str = str(event_json).replace("'", '"')
     st.download_button(
@@ -125,8 +126,11 @@ if st.button("📦 Generate Event JSON"):
         mime="application/json"
     )
 
-    # ✅ Push block (proper indentation + Bearer auth)
-    if st.button("🚀 Push to Netcore"):
+# ✅ Push to Netcore (separate button)
+if st.button("🚀 Push to Netcore"):
+    if "event_json" not in st.session_state:
+        st.error("⚠️ Please generate events first.")
+    else:
         full_url = "https://api2.netcoresmartech.com/v1/activity/upload"
         headers = {
             "Content-Type": "application/json",
@@ -137,13 +141,13 @@ if st.button("📦 Generate Event JSON"):
             response = requests.post(
                 url=full_url,
                 headers=headers,
-                json=event_json,
+                json=st.session_state["event_json"],
                 timeout=15
             )
 
             st.write("➡️ Request URL:", full_url)
             st.write("➡️ Sending Payload (first 1 event):")
-            st.json(event_json[:1])
+            st.json(st.session_state["event_json"][:1])
 
             if response.status_code == 200:
                 st.success("✅ Data pushed to Netcore successfully!")
