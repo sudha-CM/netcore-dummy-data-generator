@@ -125,39 +125,38 @@ if st.button("📦 Generate Event JSON"):
         file_name="sample_event_payloads.json",
         mime="application/json"
     )
+        if st.button("🚀 Push to Netcore"):
+        full_url = "https://api2.netcoresmartech.com/v1/activity/upload"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {api_key}"
+        }
 
-    if st.button("🚀 Push to Netcore"):
-    full_url = "https://api2.netcoresmartech.com/v1/activity/upload"
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {api_key}"
-    }
+        try:
+            response = requests.post(
+                url=full_url,
+                headers=headers,
+                json=event_json,
+                timeout=15
+            )
 
-    try:
-        response = requests.post(
-            url=full_url,
-            headers=headers,
-            json=event_json,
-            timeout=15
-        )
+            st.write("➡️ Request URL:", full_url)
+            st.write("➡️ Sending Payload (first 1 event):")
+            st.json(event_json[:1])
 
-        st.write("➡️ Request URL:", full_url)
-        st.write("➡️ Sending Payload (first 1 event):")
-        st.json(event_json[:1])
+            if response.status_code == 200:
+                st.success("✅ Data pushed to Netcore successfully!")
+                try:
+                    st.json(response.json())
+                except:
+                    st.write(response.text)
+            else:
+                st.error(f"❌ Failed with status code: {response.status_code}")
+                try:
+                    st.json(response.json())
+                except:
+                    st.write(response.text)
 
-        if response.status_code == 200:
-            st.success("✅ Data pushed to Netcore successfully!")
-            try:
-                st.json(response.json())
-            except:
-                st.write(response.text)
-        else:
-            st.error(f"❌ Failed with status code: {response.status_code}")
-            try:
-                st.json(response.json())
-            except:
-                st.write(response.text)
-
-    except Exception as e:
-        st.error(f"🚨 Request failed: {str(e)}")
+        except Exception as e:
+            st.error(f"🚨 Request failed: {str(e)}")
 
